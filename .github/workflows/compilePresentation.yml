@@ -23,6 +23,7 @@ jobs:
             path: "./compiled"
   release:
       runs-on: ubuntu-latest
+      if: github.ref_type == 'tag'
       permissions:
         contents: write
       needs: compile
@@ -36,6 +37,5 @@ jobs:
             path: ./CompiledPDF
         - name: Release
           uses: softprops/action-gh-release@v2
-          if: github.ref_type == 'tag'
           with: 
             files: ./CompiledPDF/presentation.pdf
