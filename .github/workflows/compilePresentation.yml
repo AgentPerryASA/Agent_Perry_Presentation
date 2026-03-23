@@ -9,9 +9,9 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
-          uses: actions/checkout@v4
+          uses: actions/checkout@v6
         - name: Install typst for file compiling
-          uses: typst-community/setup-typst@v4
+          uses: typst-community/setup-typst@v5
           with:
             typst-version: 0.14.x
         - name: Create output folder
@@ -19,7 +19,7 @@ jobs:
         - name: Compile with typst
           run: typst compile presentation.typ ./compiled/presentation.pdf --root ./
         - name: Upload artifact
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v6
           with:
             name: CompiledPDF
             path: "./compiled"
@@ -33,7 +33,7 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v4
         - name: Recover PDF files
-          uses: actions/download-artifact@v5
+          uses: actions/download-artifact@v8
           with:
             name: CompiledPDF
             path: ./CompiledPDF
