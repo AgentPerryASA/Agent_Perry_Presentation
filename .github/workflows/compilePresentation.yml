@@ -17,7 +17,9 @@ jobs:
         - name: Create output folder
           run: mkdir compiled
         - name: Compile with typst
-          run: typst compile presentation.typ ./compiled/presentation.pdf --root ./
+          run: |
+            typst compile presentation.typ ./compiled/presentation.pdf --root ./
+            typst compile report.typ ./compiled/report.pdf --root ./
         - name: Upload artifact
           uses: actions/upload-artifact@v6
           with:
@@ -31,7 +33,7 @@ jobs:
       needs: compile
       steps:
         - name: Checkout
-          uses: actions/checkout@v4
+          uses: actions/checkout@v6
         - name: Recover PDF files
           uses: actions/download-artifact@v8
           with:
@@ -40,4 +42,6 @@ jobs:
         - name: Release
           uses: softprops/action-gh-release@v2
           with: 
-            files: ./CompiledPDF/presentation.pdf
+            files: |
+              ./CompiledPDF/presentation.pdf
+              ./CompiledPDF/report.pdf

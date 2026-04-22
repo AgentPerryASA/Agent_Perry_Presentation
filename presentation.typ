@@ -1,4 +1,5 @@
-#import "lib/common.typ": cover, slide, agentName
+#import "lib/common.typ": agentName
+#import "lib/presentationLib.typ": cover, slide
 
 #cover(agentName)
 
