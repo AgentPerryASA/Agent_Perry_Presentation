@@ -16,8 +16,6 @@
 
     - otherwise the other agent is stuck, so recompute astar
 
-  + directional tiles: astar should already do the job, simply set contraints to neighbors according to the direction
-
   + crates: 5 indicates crate tile, 5! indicates the crate itself. compute astar, if it crosses 5!:
 
     - takes the direction with which 5! is approached by the path of astar, if there is 5 behind 5! the crate can be moved and the path is valid
@@ -34,6 +32,10 @@
 
     - if another high parcel is close, and no agent around, pick it as well
 
+  + find a way to ignore one-way areas (see "tree" map)
+
+  + if we are waiting on a green, think about something more productive to do
+
   + once we pick up a parcel, compute a star and estimate the time needed to deliver it, then if the parcel score is sufficient to cover tha path
 
   + if the estimated time of a remembered parcel near the one we picked up is sufficient to cover back and forth, take it as destination
@@ -42,9 +44,9 @@
 
   == Belief
 
-  + measure the time spent to deliver the current parcel:
+  + measure the time spent to deliver the current parcel
 
-
+  + leverage also some map info, like max score of parcels, generation tile...
 
   == Test2
   #figure(
