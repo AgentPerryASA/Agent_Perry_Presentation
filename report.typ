@@ -10,43 +10,17 @@
 
   == Movement
 
-  + if another agent is met during the movement:
-
-    - wait x seconds and then procede
-
-    - otherwise the other agent is stuck, so recompute astar
-
   + crates: 5 indicates crate tile, 5! indicates the crate itself. compute astar, if it crosses 5!:
 
     - takes the direction with which 5! is approached by the path of astar, if there is 5 behind 5! the crate can be moved and the path is valid
 
     - otherwise temporarily replace 5! with 0 and recompute astar
 
-  == Intention revision
+  == NB
 
-  + once we have some candidate parcels around us, select:
+  - we removed the logic to ignore other agents that are closer to out target parcel because with many agents, the ours gets stuck
 
-    - the one with highest score
-
-      - if another agent is closer, switch to the second highest-scored parcel and repeat
-
-    - if another high parcel is close, and no agent around, pick it as well
-
-  + find a way to ignore one-way areas (see "tree" map)
-
-  + if we are waiting on a green, think about something more productive to do
-
-  + once we pick up a parcel, compute a star and estimate the time needed to deliver it, then if the parcel score is sufficient to cover tha path
-
-  + if the estimated time of a remembered parcel near the one we picked up is sufficient to cover back and forth, take it as destination
-
-    - otherwise choose another parcel with sufficient time, if no one exists take the clsest green
-
-  == Belief
-
-  + measure the time spent to deliver the current parcel
-
-  + leverage also some map info, like max score of parcels, generation tile...
+  - we condensate generateIntention and selectBestIntention because it is a waste of time store all possible intentions while we put some contraints (e.g. if a GoPutDownIntention is available, no other one can be generated)
 
   == Test2
   #figure(
