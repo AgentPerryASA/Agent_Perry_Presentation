@@ -1,4 +1,4 @@
-#import "common.typ": course, agentName, mainColor, authors, linkColor, university, date
+#import "common.typ": course, agentName, mainColor, authors, linkColor, university, date, academicYear
 
 #let firstPage(title) = {
   show link: set text(fill: linkColor)
@@ -24,7 +24,13 @@
         #text(weight: "bold", size: 3em)[#course]
       ]
 
-      #align(center+horizon)[#v(-15em) #text(size: 3em, weight: "bold")[#title] #v(1em)]
+      #align(center+horizon)[
+        #text(size: 3em, weight: "bold")[#title]
+        #v(-1em)
+        #text(weight: "bold", size: 2em)[Report]
+        #v(10em)
+      ]
+      
 
       #table(
         stroke: none,
@@ -40,9 +46,13 @@
         [*Team members*],[#authors.andrea.name #authors.andrea.surname (#authors.andrea.stid)],
         [], [#authors.matteo.name #authors.matteo.surname (#authors.matteo.stid)],
       )
+
+      #align(bottom+center)[
+        #text(weight: "bold")[#university - A.Y. #academicYear]
+        #v(2em)
+      ]
     ],
   )
-
 }
 
 #let indexPage(imageList: true, tableList: true) = {

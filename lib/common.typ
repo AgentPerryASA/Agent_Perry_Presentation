@@ -3,7 +3,8 @@
 #let mainColor = rgb("B10B25")
 #let linkColor = blue
 #let university = "University of Trento"
-#let date = "August 17, 2007"
+#let date = [August 17#super("th"), 2007]
+#let academicYear = "2025/2026"
 
 #let authors = (
   andrea: (name: "Andrea", surname: "Precoma", stid: "267071"),
