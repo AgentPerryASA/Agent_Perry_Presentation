@@ -28,6 +28,15 @@
 
   - to move in presence of a crate, a planner is used: we need to convert the map into planner files and make the planner build a plan to move all of the crates.
 
+== ToDo
+
+- add check for nearby agents when moving (goto)
+- add check for nearby agents to pickup (exam)
+- refactor as a subintention when blockpoint is issued
+- check if decay=0
+- increment deviation number with LLM
+- finish llm part
+
   == Test2
   #figure(
     [aa],
