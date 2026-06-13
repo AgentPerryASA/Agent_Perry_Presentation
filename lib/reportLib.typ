@@ -14,7 +14,6 @@
     margin: 0em,
   )
 
-
   grid(
     columns: (35%, 65%),
     [#rect(fill: mainColor, width: 100%, height: 105%)],
@@ -100,6 +99,7 @@
   show figure: set block(breakable: true)
   show link: it => underline(text(fill: linkColor)[#it])
   show ref: rf => underline(text(fill: mainColor)[#rf])
+  set par(justify: true)
 
   counter(page).update(1)
   set heading(numbering: "1.")
@@ -117,7 +117,6 @@
   set page(
     margin: auto,
     header: [
-
       #grid(
         columns: (33%, 33%, 33%),
         align: (x, y) => {
@@ -133,8 +132,6 @@
       )
 
       #line(length: 100%)
-
-
     ],
     footer: [
       #align(center)[#context [#counter(page).display("1 of 1", both: true)]] \
