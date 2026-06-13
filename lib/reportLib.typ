@@ -24,13 +24,13 @@
         #text(weight: "bold", size: 3em)[#course]
       ]
 
-      #align(center + horizon)[
-        #text(size: 3em, weight: "bold")[#title]
-        #v(-1em)
-        #text(weight: "bold", size: 2em)[Report]
-        #v(10em)
-      ]
-      // #align(center + horizon)[#v(-15em) #text(size: 3em, weight: "bold")[#title] #v(1em)]
+      // #align(center + horizon)[
+      //   #text(size: 3em, weight: "bold")[#title]
+      //   #v(-1em)
+      //   #text(weight: "bold", size: 2em)[Report]
+      //   #v(10em)
+      // ]
+      #align(center + horizon)[#v(-15em) #text(size: 3em, weight: "bold")[#title] #v(1em)]
 
       #table(
         stroke: none,
@@ -69,7 +69,7 @@
     text(size: 1.2em)[*#it*]
   }
 
-  outline(depth: 4, title: text(size: 2em)[#v(0em) Table of content #v(0.5em)], indent: 1em)
+  outline(depth: 4, title: text(size: 2em)[#v(0em) Table of content #v(0.5em)])
 
   if (imageList == true) {
     pagebreak()
