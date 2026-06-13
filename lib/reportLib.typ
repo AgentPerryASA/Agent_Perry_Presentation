@@ -1,17 +1,17 @@
-#import "common.typ": course, agentName, mainColor, authors, linkColor, university, date
+#import "common.typ": agentName, authors, course, date, linkColor, mainColor, university
 
 #let firstPage(title) = {
   show link: set text(fill: linkColor)
   set document(
     title: [#title - #course - #university],
     author: (
-            authors.andrea.name+" "+authors.andrea.surname+" - Student Id "+authors.andrea.stid,
-            authors.matteo.name+" "+authors.matteo.surname+" - Student Id "+authors.matteo.stid
-            ),
-    description: [Report for the #course course at #university]
+      authors.andrea.name + " " + authors.andrea.surname + " - Student Id " + authors.andrea.stid,
+      authors.matteo.name + " " + authors.matteo.surname + " - Student Id " + authors.matteo.stid,
+    ),
+    description: [Report for the #course course at #university],
   )
   set page(
-      margin: 0em,
+    margin: 0em,
   )
 
 
@@ -19,39 +19,38 @@
     columns: (35%, 65%),
     [#rect(fill: mainColor, width: 100%, height: 105%)],
     [
-      #align(top+center)[
+      #align(top + center)[
         #v(5em)
         #text(weight: "bold", size: 3em)[#course]
       ]
 
-      #align(center+horizon)[#v(-15em) #text(size: 3em, weight: "bold")[#title] #v(1em)]
+      #align(center + horizon)[#v(-15em) #text(size: 3em, weight: "bold")[#title] #v(1em)]
 
       #table(
         stroke: none,
         table.vline(x: 1, start: 0, stroke: mainColor),
-        columns: (45%,auto),
-        align: (x,y) => {
-          if(x==0) {
+        columns: (45%, auto),
+        align: (x, y) => {
+          if (x == 0) {
             right
           } else {
             left
           }
         },
-        [*Team members*],[#authors.andrea.name #authors.andrea.surname (#authors.andrea.stid)],
+        [*Team members*], [#authors.andrea.name #authors.andrea.surname (#authors.andrea.stid)],
         [], [#authors.matteo.name #authors.matteo.surname (#authors.matteo.stid)],
       )
     ],
   )
-
 }
 
 #let indexPage(imageList: true, tableList: true) = {
   set page(
     margin: auto,
     footer: [
-      #align(center)[#context[#counter(page).display("1 of 1", both: true,)]] \
+      #align(center)[#context [#counter(page).display("i")]] \
       #place(dx: -71pt, dy: -2pt)[#rect(height: 50%, width: 135%, stroke: none, fill: mainColor)]
-    ]
+    ],
   )
 
   show outline.entry.where(level: 1): it => {
@@ -59,9 +58,11 @@
     text(size: 1.2em)[*#it*]
   }
 
-  outline(depth: 4, title: text(size: 2em)[#v(0em) Index #v(0.5em)], indent: 1em)
+  outline(depth: 4, title: text(size: 2em)[#v(0em) Table of content #v(0.5em)], indent: 1em)
 
-  if(imageList==true) {
+  if (imageList == true) {
+    pagebreak()
+
     text(size: 2em)[#v(0.5em) *Images* #v(-0.5em)]
 
     show outline: set text(weight: "thin")
@@ -71,20 +72,20 @@
     )
   }
 
-  if(tableList==true) {
+  if (tableList == true) {
+    pagebreak()
+
     text(size: 2em)[#v(0.5em) *Tables* #v(-0.5em)]
-    
+
     show outline: set text(weight: "thin")
     outline(
       title: [],
       target: figure.where(kind: table),
     )
   }
-
 }
 
 #let docBody(body) = {
-
   show figure: set block(breakable: true)
   show link: it => underline(text(fill: linkColor)[#it])
   show ref: rf => underline(text(fill: mainColor)[#rf])
@@ -117,15 +118,14 @@
       )
 
       #line(length: 100%)
-      
+
 
     ],
     footer: [
-      #align(center)[#context[#counter(page).display("1 of 1", both: true,)]] \
+      #align(center)[#context [#counter(page).display("1 of 1", both: true)]] \
       #place(dx: -71pt, dy: -2pt)[#rect(height: 50%, width: 135%, stroke: none, fill: mainColor)]
-    ]
+    ],
   )
 
   body
-
 }
