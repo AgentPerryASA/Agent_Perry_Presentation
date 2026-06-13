@@ -90,6 +90,7 @@
   show link: it => underline(text(fill: linkColor)[#it])
   show ref: rf => underline(text(fill: mainColor)[#rf])
 
+  counter(page).update(1)
   set heading(numbering: "1.")
 
   show heading.where(level: 1): h => {
@@ -98,6 +99,9 @@
     h
     v(1em)
   }
+  show heading.where(level: 2): set text(size: 1.4em)
+  show heading.where(level: 3): set text(size: 1.25em)
+  show heading.where(level: 4): set text(size: 1.15em)
 
   set page(
     margin: auto,
