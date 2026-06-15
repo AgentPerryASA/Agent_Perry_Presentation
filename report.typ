@@ -1,6 +1,8 @@
 #import "lib/common.typ": agentName, course
 #import "lib/reportLib.typ": docBody, firstPage, indexPage
 
+#import "@preview/chronos:0.3.0"
+
 #firstPage(agentName)
 
 #indexPage(tableList: false)
@@ -143,5 +145,87 @@
 
   = LLM <sec-llm>
 
-  == BDI agents coordination <sec-coordination>
+  While the main goal of an agent in Deliveroo.js is to gain as much points as possible, the admin user can issue some tasks that allow agents to get additional points. Specifically, the agent support the following commands, divided by level:
+
+  - Level 1:
+    - The agent is able to go to a specified coordinate to get additional points;
+    - The agent is able to deliver parcels to a defined red tile if this allows it to get more points;
+    - The agent is able to answer questions like "Calculate log(100)", or "What is the temperature in Rome?", or "What are the coordinates of Rome?", or "What is the year reported in the following website?";
+  - Level 2:
+    - The agent is able to modify the number of parcels it can collect before delivering them if an exact amount allows it to gain more points;
+    - The agent is able to privilege some red tiles rather than another when they make the agent gain more points;
+  - Level 3:
+    - The agent is able to team up with another agent to deliver a parcel. Specifically, the first agent could drop a set of parcels in a certain location and tell the other agent to pick them up and deliver them if such action will allow to get more points;
+    - The agent is able to stop in an even or odd-numbered row or column until it is told to move again if such action allows to gain more points.
+
+  When the admin publishes a task, one of the two agents question the LLM about what is the best intention, and then it will follow the LLM's answer.
+
+  Unfortunately, to make the LLM understand what action is the more appropriate one, an initial introduction prompt is necessary: because of hallucination-related issues with the LLM, it was not possible to support all the tasks published on the course's slides.
+
+  In order to satisfy the tasks, the following tools have been introduced inside the `llm-tools.js` file:
+  - *calc*: evaluate a mathematical expression;
+  - *findExtremePosition*: returns a red tile in an extremes of the map (leftmost, rightmost, topmost or bottommost);
+  - *webSearch*: retrieves a webpage and makes the LLM analyze it in order for it to found some required information;
+  - *getLatLong*: returns the latitude and longitude of a certain location;
+  - *getTemp*: return the current temperature in a certain location.
+
+  About the architecture, the LLM component is not integrated with the BDI agent, but it has to be considered as a plugin to the BDI agent. Specifically, when the LLM functionality is enabled inside the `.env` file (setup instruction of the agent can be retrieved at the #link("https://github.com/AgentPerryASA/Agent_Perry")[project repository]), an instance of an `LLMAgent` is created and connected to the Deliveroo.js server via the same token of one of the two agents (specifically, the one with token TOKEN1 in the `.env` file). Since the nature of the various tasks, another agent need to be spawn upon startup of the main script: the two agent proceed to connect to each other via an handshake protocol that works as shown in the following @handshakeProtocol.
+
+  #figure(
+    caption: [Handshake protocol between agents],
+  )[
+    #align(horizon + center)[
+      #chronos.diagram({
+        import chronos: *
+
+        _par("A2", display-name: "Second Agent")
+        _par("A1", display-name: "First Agent")
+        _par("LLM", display-name: "LLMAgent")
+
+        _seq("LLM", "LLM", comment: "Register attached agent identifier", comment-align: "center")
+        _seq("A1", "A2", comment: "HandshakeMessage{key: dotEnvKey, agentId: id}", comment-align: "center")
+        _seq("A2", "A2", comment: "Register mate identifier", comment-align: "center")
+        _seq("A2", "A1", comment: "HandshakeMessage{key: dotEnvKey, agentId: id}}", comment-align: "center")
+        _seq("A2", "LLM", comment: "HandshakeMessage{key: dotEnvKey, agentId: id}}", comment-align: "left")
+        _seq("A1", "A1", comment: "Register mate identifier", comment-align: "center")
+        _seq("LLM", "LLM", comment: "Register agent identifier", comment-align: "center")
+
+        _seq("LLM", "A1", comment: "LLMSetIdMessage{llmAgentId: id}", comment-align: "center")
+        _seq("A1", "A1", comment: "Register agent with LLM identifier", comment-align: "center")
+
+        _seq("LLM", "A2", comment: "LLMSetIdMessage{llmAgentId: id}", comment-align: "center")
+        _seq("A2", "A2", comment: "Register agent with LLM identifier", comment-align: "center")
+      })
+    ]
+  ] #label("handshakeProtocol")
+
+  The `LLMAgent` is constantly listening to messages published by the admin user: upon reception, the message is analyzed by the LLM connected to the agent, which elaborate a final decision to send to the connected `BDIAgent` or both the agent. Specifically:
+
+  - If the task requires to move an agent to a certain tile, an *LLMGoToIntention* is sent to the attached agent for making it move to a certain tile;
+  - If the task requires to drop a parcel in a specific location, a *LLMGoPutDownIntention* is sent to the attached agent to modified a GoPutDownIntention delivery location, if such intention was present in the queue;
+  - If the task requires to privilege (or disadvantage) delivering to a certain group of tiles an *LLMSetTileWeightMultiplierMessage* is sent to both agents in order to positively or negatively impact the weight of such group of tiles;
+  - If the task requires to stop in an odd or even row/column tile a *LLMGreenRedLightIntention* is sent. When the admin tell that movement can resume, a *LLMGreenLightEmittedMessage* is sent. Both messages are sent to both agents;
+  - if the task requires to answer directly (for example, because the temperature was asked), the `LLMAgent` will directly answer without contacting anyone.
+
+  Finally, the LLM automatically filters out tasks with a negative revenue (except if such task requires to deprioritize a red tile) and it is used also to tune some parameters, see @sec-tuning for additional information.
+
+  == BDI agents coordination and task revision <sec-coordination>
+
+  Upon receiving an intention, while LLMIntentions usually take priority over other intentions this does not mean they will necessarily executed, since a revision always takes place.
+
+  Specifically, a deviation caused by an LLMGoToIntention is taken only if it is at a maximum of 3 tiles from the agent or if the number of points that the agent would gain is greater that the value the same agent will obtain by delivering the currently carried parcels.
+
+  Similarly, an LLMGoPutDownIntention is taken into consideration if the agent had already a GoPutDownIntention in the queue and if by changing the delivery point the number of points that it will get is greater than the value obtain by simply delivering the current parcels.
+
+  In both cases, if the intention cannot be taken into consideration, the same intention is sent to the agent who completed the handshake protocol with the agent attached to the LLM: this behavior define the simplest collaboration strategy between the two agents.
+
+  However, it is perfectly possible for an agent to be required to put down the currently carried parcels in a non-red tile: to avoid losing point, the agent will send a message to the other agent asking it to pickup the dropped parcels. This intention, called *LLMGoPickUpIntention* since it usually originates because the LLM asked the two agents to team up in a delivery, has maximum priority and it is never dropped.
+
+  Finally, it is important to mention that if an agent decides to execute an LMIntention, this assumes maximum priority: it is not possible to stop the execution of such intention. This was decided based on the general nature of the various tasks, an opportunity to gain a considerable amount of points.
+
+  == BDI agents parameters tuning <sec-tuning>
+
+  - *LLMSetAdditionalTuningParametersMessage*
 ]
+
+
