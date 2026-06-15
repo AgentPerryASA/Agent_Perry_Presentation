@@ -68,9 +68,11 @@
     text(size: 1.2em)[*#it*]
   }
 
-  outline(depth: 4, title: text(size: 2em)[#v(0em) Table of content #v(0.5em)])
+  outline(title: text(size: 2em)[#v(0em) Table of content #v(0.5em)])
 
   if (imageList == true) {
+    pagebreak()
+
     text(size: 2em)[#v(0.5em) *Images* #v(-0.5em)]
 
     show outline: set text(weight: "thin")
@@ -81,6 +83,8 @@
   }
 
   if (tableList == true) {
+    pagebreak()
+
     text(size: 2em)[#v(0.5em) *Tables* #v(-0.5em)]
 
     show outline: set text(weight: "thin")
@@ -96,6 +100,7 @@
   show link: it => underline(text(fill: linkColor)[#it])
   show ref: rf => underline(text(fill: mainColor)[#rf])
   set par(justify: true)
+  set text(hyphenate: false)
 
   counter(page).update(1)
   set heading(numbering: "1.")
