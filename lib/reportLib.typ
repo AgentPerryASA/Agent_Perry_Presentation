@@ -71,8 +71,6 @@
   outline(depth: 4, title: text(size: 2em)[#v(0em) Table of content #v(0.5em)])
 
   if (imageList == true) {
-    pagebreak()
-
     text(size: 2em)[#v(0.5em) *Images* #v(-0.5em)]
 
     show outline: set text(weight: "thin")
@@ -83,8 +81,6 @@
   }
 
   if (tableList == true) {
-    pagebreak()
-
     text(size: 2em)[#v(0.5em) *Tables* #v(-0.5em)]
 
     show outline: set text(weight: "thin")
