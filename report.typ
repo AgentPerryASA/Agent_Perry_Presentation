@@ -26,7 +26,7 @@
 
   - *Hyperbola* - $0.1 / (x + 0.1)$, used to privilege close tiles. It rapidly decreases as the distance grows.
 
-  Note that the domain of the functions is $[0, 1]$. Given a red or green tile, every distance of every its path is normalized over the sum of all distances. Hence, after the paths are computed, the contribution of each path w.r.t. the tile is $#text[ratio] = #text[distance] / #text[sum of distances]$, and the weight is computed as $w = f(#text[ratio])$.
+  Note that the domain of the functions is $[0, 1]$. Given a red or green tile, every distance of every its path is normalized over the sum of all distances. Hence, given the set of path $P = {p_1, dots, p_n}$ and the respective distances $D = {d_1, dots, d_n}$, firstly the ratio of each path is calculated as $r_i = d_i / (sum_(j=0)^n d_j)$, and then the weight $w_i = f(r_i)$.
 
   #figure(
     image(
@@ -36,11 +36,15 @@
     caption: [Graphs of cosine and hyperbola style functions],
   ) <fig-rnd-func-graphs>
 
+  In the case of two "special" tiles only, so $n = 1$ for both of them, the weight would be the lowest possible because of the maximum ratio $r_1 = 1$, so a condition is set to override the value to $w_1 = 1$.
+
+  Moreover, some death areas might be found in the maps, in particular leveraging the directional tiles that allow the agent to enter but not to exit. To avoid them, once the paths are pre-computed for each red and green tile, the forth and back route is considered: if both the paths are found, they are stored and weighted, otherwise they will not be selected from the random function when needed, and so the "one-way" zone will ever be reached.
+
   An important part for the beliefs is the list of detected parcels, `parcelList`: this is updated using the `reviseParcelList(sensedParcelsList)` function and it is not a simple memorization mechanism. Upon receiving a new list of sensed parcels, the function predicts the time it will need for it to complete the revision, fixed at 0.01 seconds per parcel currently present in the list. Why this time, called `endTime`, whose value has been chosen after several tries, is important will be explained later.
 
   For every parcel that was already memorized, it is first checked whether the same parcel in the sensed list is carried by the current agent: in case of positive answer, the carried parcels list is updated. Otherwise, the function checks whether the parcel is not carried, has a score over a minimum value `parcelMinScore`, and is over a green tile (this is to avoid that the agent put down and sequentially pick up the same parcel when it is teaming up with another agent, see @sec-coordination for additional information): in such case the parcel information are updated, including the endTime, otherwise the parcel is deleted from the list.
 
-  If a parcel of the list is not present in the sensed list, this means that is necessary to update its current value manually: to do that, every parcel in the list has a field called `cumulatedTime` that stores how much time passed after every execution of the revision function. This field is equal to its current value, plus the difference between the endTime (time after the revision function finishes its execution) and the time in which the parcel was updated for the last time (`lastUpdateTimestamp`). If the new cumulatedTime is higher than the decay timer value (`parcelDecayTimerValue`), then its reward is updated accordingly to the cumulatedTime divided by the decay value. Of course, if the new reward is under the minimum acceptable value, the parcel is automatically deleted.
+  If a parcel of the list is not present in the sensed list, this means that is necessary to update its current value manually: to do that, every parcel in the list has a field called `cumulatedTime` that stores how much time passed after every execution of the revision function. This field is equal to its current value, plus the difference between the endTime (time after the revision function finishes its execution) and the time in which the parcel was updated for the last time (`lastUpdateTimestamp`). If the new cumulatedTime is higher than the decay timer value (`parcelDecayTimerValue`), then its reward is updated accordingly to the `cumulatedTime` divided by the decay value. Of course, if the new reward is under the minimum acceptable value, the parcel is automatically deleted.
 
   Finally, all parcels that were not previously on the list are added to `parcelList`.
 
