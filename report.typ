@@ -180,27 +180,30 @@
     caption: [Handshake protocol between agents],
   )[
     #align(horizon + center)[
-      #chronos.diagram({
-        import chronos: *
+      #chronos.diagram(
+        {
+          import chronos: *
 
-        _par("A2", display-name: "Second Agent")
-        _par("A1", display-name: "First Agent")
-        _par("LLM", display-name: "LLMAgent")
+          _par("A2", display-name: "Second Agent")
+          _par("A1", display-name: "First Agent")
+          _par("LLM", display-name: "LLMAgent")
 
-        _seq("LLM", "LLM", comment: "Register attached agent identifier", comment-align: "center")
-        _seq("A1", "A2", comment: "HandshakeMessage{key: dotEnvKey, agentId: id}", comment-align: "center")
-        _seq("A2", "A2", comment: "Register mate identifier", comment-align: "center")
-        _seq("A2", "A1", comment: "HandshakeMessage{key: dotEnvKey, agentId: id}}", comment-align: "center")
-        _seq("A2", "LLM", comment: "HandshakeMessage{key: dotEnvKey, agentId: id}}", comment-align: "left")
-        _seq("A1", "A1", comment: "Register mate identifier", comment-align: "center")
-        _seq("LLM", "LLM", comment: "Register agent identifier", comment-align: "center")
+          _seq("LLM", "LLM", comment: "Register attached agent identifier", comment-align: "center")
+          _seq("A1", "A2", comment: "HandshakeMessage{dotEnvKey, id}", comment-align: "center")
+          _seq("A2", "A2", comment: "Register mate identifier", comment-align: "center")
+          _seq("A2", "A1", comment: "HandshakeMessage{dotEnvKey, id}", comment-align: "center")
+          _seq("A2", "LLM", comment: "HandshakeMessage{dotEnvKey, id}", comment-align: "left")
+          _seq("A1", "A1", comment: "Register mate identifier", comment-align: "center")
+          _seq("LLM", "LLM", comment: "Register agent identifier", comment-align: "center")
 
-        _seq("LLM", "A1", comment: "LLMSetIdMessage{llmAgentId: id}", comment-align: "center")
-        _seq("A1", "A1", comment: "Register agent with LLM identifier", comment-align: "center")
+          _seq("LLM", "A1", comment: "LLMSetIdMessage{id}", comment-align: "center")
+          _seq("A1", "A1", comment: "Register agent with LLM identifier", comment-align: "center")
 
-        _seq("LLM", "A2", comment: "LLMSetIdMessage{llmAgentId: id}", comment-align: "center")
-        _seq("A2", "A2", comment: "Register agent with LLM identifier", comment-align: "center")
-      })
+          _seq("LLM", "A2", comment: "LLMSetIdMessage{id}", comment-align: "center")
+          _seq("A2", "A2", comment: "Register agent with LLM identifier", comment-align: "center")
+        },
+        width: 95%,
+      )
     ]
   ] #label("handshakeProtocol")
 
