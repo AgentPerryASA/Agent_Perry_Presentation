@@ -145,31 +145,36 @@
 
   = LLM <sec-llm>
 
-  While the main goal of an agent in Deliveroo.js is to gain as much points as possible, the admin user can issue some tasks that allow agents to get additional points. Specifically, the agent support the following commands, divided by level:
+  While the main goal of an agent in Deliveroo.js is to gain as much points as possible, the admin user can issue some tasks that allow agents to get additional points. Specifically, the agent supports the following commands, divided by level.
 
-  - Level 1:
+  - *Level 1*:
     - The agent is able to go to a specified coordinate to get additional points;
     - The agent is able to deliver parcels to a defined red tile if this allows it to get more points;
-    - The agent is able to answer questions like "Calculate log(100)", or "What is the temperature in Rome?", or "What are the coordinates of Rome?", or "What is the year reported in the following website?";
-  - Level 2:
+    - The agent is able to answer questions like "Calculate log(100)", "What is the temperature in Rome?", "What are the coordinates of Rome?", or "What is the year reported in the following website?";
+  - *Level 2*:
     - The agent is able to modify the number of parcels it can collect before delivering them if an exact amount allows it to gain more points;
     - The agent is able to privilege some red tiles rather than another when they make the agent gain more points;
-  - Level 3:
+  - *Level 3*:
     - The agent is able to team up with another agent to deliver a parcel. Specifically, the first agent could drop a set of parcels in a certain location and tell the other agent to pick them up and deliver them if such action will allow to get more points;
-    - The agent is able to stop in an even or odd-numbered row or column until it is told to move again if such action allows to gain more points.
+    - The agent is able to stop onto a given coordinate, or onto an even or odd-numbered row or column until it is told to move again if such action allows to gain more points.
 
   When the admin publishes a task, one of the two agents question the LLM about what is the best intention, and then it will follow the LLM's answer.
 
   Unfortunately, to make the LLM understand what action is the more appropriate one, an initial introduction prompt is necessary: because of hallucination-related issues with the LLM, it was not possible to support all the tasks published on the course's slides.
 
-  In order to satisfy the tasks, the following tools have been introduced inside the `llm-tools.js` file:
-  - *calc*: evaluate a mathematical expression;
-  - *findExtremePosition*: returns a red tile in an extremes of the map (leftmost, rightmost, topmost or bottommost);
-  - *webSearch*: retrieves a webpage and makes the LLM analyze it in order for it to found some required information;
-  - *getLatLong*: returns the latitude and longitude of a certain location;
-  - *getTemp*: return the current temperature in a certain location.
+  In order to satisfy the tasks, the following tools have been introduced inside the `llm-tools.js` file.
 
-  About the architecture, the LLM component is not integrated with the BDI agent, but it has to be considered as a plugin to the BDI agent. Specifically, when the LLM functionality is enabled inside the `.env` file (setup instruction of the agent can be retrieved at the #link("https://github.com/AgentPerryASA/Agent_Perry")[project repository]), an instance of an `LLMAgent` is created and connected to the Deliveroo.js server via the same token of one of the two agents (specifically, the one with token TOKEN1 in the `.env` file). Since the nature of the various tasks, another agent need to be spawn upon startup of the main script: the two agent proceed to connect to each other via an handshake protocol that works as shown in the following @handshakeProtocol.
+  - *calc* - evaluate a mathematical expression;
+
+  - *findExtremePosition* - returns a red tile in an extremes of the map (leftmost, rightmost, topmost or bottommost);
+
+  - *webSearch* - retrieves a webpage and makes the LLM analyze it in order for it to found some required information;
+
+  - *getLatLong* - returns the latitude and longitude of a certain location;
+
+  - *getTemp* - return the current temperature in a certain location.
+
+  About the architecture, the LLM component is not integrated with the BDI agent, but it has to be considered as a plugin to the BDI agent. Specifically, when the LLM functionality is enabled inside the `.env` file (setup instruction of the agent can be retrieved at the #link("https://github.com/AgentPerryASA/Agent_Perry")[project repository]), an instance of an `LLMAgent` is created and connected to the Deliveroo.js server via the same token of one of the two agents (specifically, the one with token TOKEN1 in the `.env` file). Since the nature of the various tasks, another agent need to be spawn upon startup of the main script: the two agent proceed to connect to each other via a handshake protocol that works as shown in the @handshakeProtocol.
 
   #figure(
     caption: [Handshake protocol between agents],
@@ -199,33 +204,69 @@
     ]
   ] #label("handshakeProtocol")
 
-  The `LLMAgent` is constantly listening to messages published by the admin user: upon reception, the message is analyzed by the LLM connected to the agent, which elaborate a final decision to send to the connected `BDIAgent` or both the agent. Specifically:
+  The `LLMAgent` is constantly listening to messages published by the admin user: upon reception, the message is analyzed by the LLM connected to the agent, which elaborate a final decision to send to the connected `BDIAgent` or both the agent.
 
-  - If the task requires to move an agent to a certain tile, an *LLMGoToIntention* is sent to the attached agent for making it move to a certain tile;
-  - If the task requires to drop a parcel in a specific location, a *LLMGoPutDownIntention* is sent to the attached agent to modified a GoPutDownIntention delivery location, if such intention was present in the queue;
-  - If the task requires to privilege (or disadvantage) delivering to a certain group of tiles an *LLMSetTileWeightMultiplierMessage* is sent to both agents in order to positively or negatively impact the weight of such group of tiles;
-  - If the task requires to stop in an odd or even row/column tile a *LLMGreenRedLightIntention* is sent. When the admin tell that movement can resume, a *LLMGreenLightEmittedMessage* is sent. Both messages are sent to both agents;
-  - if the task requires to answer directly (for example, because the temperature was asked), the `LLMAgent` will directly answer without contacting anyone.
+  - If the task requires to move an agent to a certain tile, an *LLMGoToIntention* is sent to the attached agent for making it move to a certain tile.
+
+  - If the task requires to drop a parcel in a specific location, a *LLMGoPutDownIntention* is sent to the attached agent to modified a GoPutDownIntention delivery location, if such intention was present in the queue.
+
+  - If the task requires to privilege (or disadvantage) delivering to a certain group of tiles an *LLMSetTileWeightMultiplierMessage* is sent to both agents in order to positively or negatively impact the weight of such group of tiles.
+
+  - If the task requires to stop in an odd or even row/column tile a *LLMGreenRedLightIntention* is sent. When the admin tell that movement can resume, a *LLMGreenLightEmittedMessage* is sent. Both messages are sent to both agents.
+
+  - If the task requires to answer directly (for example, because the temperature was asked), the `LLMAgent` will directly answer without contacting anyone.
 
   Finally, the LLM automatically filters out tasks with a negative revenue (except if such task requires to deprioritize a red tile) and it is used also to tune some parameters, see @sec-tuning for additional information.
 
   == BDI agents coordination and task revision <sec-coordination>
 
-  Upon receiving an intention, while LLMIntentions usually take priority over other intentions this does not mean they will necessarily executed, since a revision always takes place.
+  Upon receiving an intention, while LLMIntentions usually take priority over other intentions, this does not mean they will necessarily executed, since a revision always takes place.
 
-  Specifically, a deviation caused by an LLMGoToIntention is taken only if it is at a maximum of 3 tiles from the agent or if the number of points that the agent would gain is greater that the value the same agent will obtain by delivering the currently carried parcels.
+  Specifically, a deviation caused by a LLMGoToIntention is taken only if it is at a maximum of 3 tiles from the agent or if the number of points that the agent would gain is greater that the value the same agent will obtain by delivering the currently carried parcels.
 
-  Similarly, an LLMGoPutDownIntention is taken into consideration if the agent had already a GoPutDownIntention in the queue and if by changing the delivery point the number of points that it will get is greater than the value obtain by simply delivering the current parcels.
+  Similarly, an LLMGoPutDownIntention is taken into consideration if the agent had already a GoPutDownIntention in the queue and if by changing the delivery point the number of points that it will get is greater than the value obtained by simply delivering the current parcels.
 
-  In both cases, if the intention cannot be taken into consideration, the same intention is sent to the agent who completed the handshake protocol with the agent attached to the LLM: this behavior define the simplest collaboration strategy between the two agents.
+  In both cases, if the intention cannot be taken into consideration, the same intention is forwarded to the agent who completed the handshake protocol with the agent attached to the LLM: this behavior define the simplest collaboration strategy between the two agents. However, it is perfectly possible for an agent to be required to put down the currently carried parcels in a non-red tile: to avoid losing point, the agent will send a message to the other agent asking it to pick up the dropped parcels. This intention, called *LLMGoPickUpIntention*, has maximum priority and it is never dropped since it usually originates because the LLM asked the two agents to team up in a delivery.
 
-  However, it is perfectly possible for an agent to be required to put down the currently carried parcels in a non-red tile: to avoid losing point, the agent will send a message to the other agent asking it to pickup the dropped parcels. This intention, called *LLMGoPickUpIntention* since it usually originates because the LLM asked the two agents to team up in a delivery, has maximum priority and it is never dropped.
-
-  Finally, it is important to mention that if an agent decides to execute an LMIntention, this assumes maximum priority: it is not possible to stop the execution of such intention. This was decided based on the general nature of the various tasks, an opportunity to gain a considerable amount of points.
+  Finally, it is important to mention that if an agent decides to execute a LLMIntention, this assumes maximum priority: it is not possible to stop the execution of such intention. This was decided based on the general nature of the various tasks, an opportunity to gain a considerable amount of points.
 
   == BDI agents parameters tuning <sec-tuning>
 
-  - *LLMSetAdditionalTuningParametersMessage*
+  A LLM is a very powerful tool that is able to understand concepts, reason on them and provide some consistent answers. We desired to leverage these properties not only by interpreting tasks, but also evaluating the performances of the BDI agents and tuning their parameters. For this purpose, each agent supply the following data to the LLM agent every 30 seconds.
+
+  - Score of the agent.
+
+  - Maximum number of parcels that can spawn in the map. This information might help the LLM to ponder about random functions (whether favor exploration) and the number of deviations.
+
+  - Average score per parcel.
+
+  #let avg = text[avg]
+  #let var = text[var]
+  - Variance score per parcel (the final score is a random value in $[#avg - #var, #avg + #var]$).
+
+  - Number of agents seen so far. If there are many agents in the map, the movement speed should decrease in order to reduce collisions, and probably the number of deviations is diminished in turn due to high competition.
+
+  - Mean of attempts to follow a path. For every computed path $p_i$, a set of deviations $d_i$ due to some obstacles might be taken. The mean is thus calculated as $m = 1/k sum_(i=1)^k abs(d_i)$ where $k$ is the number of taken paths. Having a low $m$ means successfully avoiding obstacles.
+
+  - Types of functions to select random destination tiles (used to explore the map).
+
+  The LLM is required to provide the new values for the following parameters.
+
+  - Number of possible deviations to pick up a parcel (between 2 and 5).
+
+  - Number of tiles in front of the agent to check an obstacle on the path (between 2 and 4).
+
+  - Number of tiles to ignore after an obstacle on the path (between 2 and 4).
+
+  - Delay in sending movement requests to the server (between 0 and 100 ms).
+
+  - Type of function to randomize the destination ("cosine" for higher randomicity, "hyperbola" for privileging close tiles).
+
+  - Multiplier $m$ to get $#text[parcelMinScore] = #text[parcelMaxScore] dot m$ (between 0.2 and 0.6).
+
+  Once the LLM responds, the LLM agent parses the values, verifies they are in the requested ranges, and sends back a *LLMParametersTuningResponseMessage*. The receiver BDI agent assigns the new values in its beliefs and smoothly continue to play.
+
+  // - *LLMSetAdditionalTuningParametersMessage*
 ]
 
 
