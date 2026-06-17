@@ -64,13 +64,13 @@
 
   - *GoToIntention* - the desire of reaching a specific tile;
 
-  - *DeviateUsingAStarIntention* - the desire to requesting to the internal #Astar algorithm a new path, because the one selected by the agent is no more practicable;
+  - *DeviateUsingAStarIntention* - the desire to request to the internal #Astar algorithm a new path, because the one selected by the agent is no more practicable;
 
   - *DeviateUsingPlannerIntention* - the desire to request from the PDDL planner a new path, because the one selected by the agent is no more practicable. The planner involvement is explained in details in @sec-planner;
 
   - *GoPickUpIntention* - the desire of picking up a parcel at a specific tile;
 
-  - *GoPutDownIntention* - the desire to deliver all the parcels the agent is carrying on a specific tile; //also white tile in case of teaming between agents
+  - *GoPutDownIntention* - the desire to deliver all the parcels the agent is carrying on a specific tile;
 
   - *DeviateAndPickUpIntention* - the desire of picking up a parcel while the agent is going to put down others. In some cases the agent can pick up a parcel that will increase the score with a simple small change in the path, without wasting much time.
 
@@ -104,11 +104,11 @@
 
   Finally, if the selected best intention is not already present in the queue, the current intention is stopped and the new intention is pushed together with the corresponding plan. If the current intention was a GoToIntention, it is also popped due to its lowest priority. Then, the (new) current plan is executed and popped once it finishes. If the completed plan was a deviation and the current one is a GoPutDownPlan, the path of latter is updated keeping the same destination but with a new start point: the tile on which there was the parcel that caused the deviation.
 
-  == Plans
+  == Plans <sec-plan>
 
   We decided to split the plans into basics actions, and then combine them in order to build more complex plans. The fundamental steps are the following:
 
-  - *GoToPlan* - calculates a path from the agent position to a specified tile. According to the situation, it can use either an internal algorithm (#Astar in our case) or the PDDL planner (in case crates are present). Once the path is computed, at each step the next tiles in front of the agent are checked to detect the presence of any obstacle (e.g. another agent or a crate). In order to avoid collisions and accumulate penalties, a deviation is computed in advance from the tile immediately before the obstacle. The tile of the obstacle is temporarily obscured (type 0) such that the path finder algorithm ignores it;
+  - *GoToPlan* - calculates a path from the agent position to a specified tile. According to the situation, it can use either an internal algorithm (#Astar in our case) or the PDDL planner (in case crates are present). Once the path is computed, at each step the next tiles in front of the agent are checked to detect the presence of any obstacle (e.g. another agent or a crate). In order to avoid collisions and accumulate penalties, a deviation is computed in advance from the tile immediately before the obstacle. The tile of the obstacle and $n$ tiles behind it are temporarily obscured (type 0) such that the path finder algorithm ignores them;
 
   - *DeviateUsingAStarPlan* - calculates a path from a certain tile to a specified destination using the #Astar algorithm. It is used as a sub-plan in GoToPlan;
 
@@ -230,13 +230,25 @@
 
   Upon receiving an intention, while LLMIntentions usually take priority over other intentions, this does not mean they will necessarily be executed, since a revision always takes place.
 
-  Specifically, a deviation caused by an LLMGoToIntention is taken only if it is at a maximum of 3 tiles from the agent or if the number of points that the agent would gain is greater than the value the same agent would obtain by delivering the currently carried parcels.
+  Specifically, a deviation caused by a *LLMGoToIntention* is taken only if it is at a maximum of 3 tiles from the agent or if the number of points that the agent would gain is greater than the value the same agent would obtain by delivering the currently carried parcels.
 
-  Similarly, an LLMGoPutDownIntention is taken into consideration only if the agent had already a GoPutDownIntention in the queue and if by changing the delivery point the number of points that it will get is greater than the value obtained by simply delivering the current parcels.
+  Similarly, a *LLMGoPutDownIntention* is taken into consideration only if the agent had already a GoPutDownIntention in the queue and if by changing the delivery point the number of points that it will get is greater than the value obtained by simply delivering the current parcels.
 
   In both cases, if the intention cannot be taken into consideration, the same intention is forwarded to the agent who completed the handshake protocol with the agent attached to the LLM: this behavior define the simplest collaboration strategy between the two agents. However, it is perfectly possible for an agent to be required to put down the currently carried parcels in a non-red tile: to avoid losing points, the agent will send a message to the other agent asking it to pick up the dropped parcels. This intention, called *LLMGoPickUpIntention*, has maximum priority and it is never dropped since it usually originates because the LLM asked the two agents to team up in a delivery.
 
   Finally, it is important to mention that if an agent decides to execute a LLMIntention, this assumes maximum priority: it is not possible to stop the execution of such intention. This was decided based on the general nature of the various tasks, an opportunity to gain a considerable amount of points.
+
+  === Movement coordination
+
+  When a BDI agent is following a path, the GoToPlan checks for an obstacle at every step (typically another agent) in the next $n$ tiles in path (as described in @sec-plan). Having two BDI agents that behave in the same way, however, would lead to repeated collisions back and forth in some circular paths, as shown in @fig-bungee-jumping. Our solution was to delay the calculation of the deviation for only one of the two agents by a small amunt of time. By doing this, the two get desynchronized and other unecessary collisions are avoided.
+
+  #figure(
+    image(
+      "img/bungee-jumping.png",
+      width: 70%,
+    ),
+    caption: [Repeated collisions problem],
+  ) <fig-bungee-jumping>
 
   == BDI agents parameters tuning <sec-tuning>
 
@@ -254,7 +266,7 @@
 
   - Mean of attempts to follow a path. For every computed path $p_i$, a set of deviations $d_i$ due to some obstacles might be taken. The mean is thus calculated as $m = 1/k sum_(i=1)^k abs(d_i)$ where $k$ is the number of taken paths. Having a low $m$ means successfully avoiding obstacles;
 
-  - Types of functions to select random destination tiles (used to explore the map).
+  - Type of function to select random destination tiles (used to explore the map).
 
   The LLM is required to provide the new values for the following parameters:
 
@@ -264,14 +276,11 @@
 
   - Number of tiles to ignore after an obstacle on the path (between 2 and 4);
 
-  - Delay in sending movement requests to the server (between 0 and 100 ms);
+  - Delay in sending movement requests to the server (between 0 and 50 ms);
 
   - Type of function to randomize the destination ("cosine" for higher randomicity, "hyperbola" for privileging close tiles);
 
   - Multiplier $m$ to get $#text[parcelMinScore] = #text[parcelMaxScore] dot m$ (between 0.2 and 0.6).
 
   Once the LLM responds, the LLM agent parses the values, verifies they are in the requested ranges, and sends back a *LLMParametersTuningResponseMessage*. The receiver BDI agent assigns the new values in its beliefs and smoothly continue to play.
-
 ]
-
-
